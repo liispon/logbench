@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"strings"
 	"testing"
 	"time"
 
@@ -431,6 +432,16 @@ func validate(t *testing.T, ctx *testCtx, name string, supported bool, want map[
 		var got map[string]interface{}
 		if err := json.Unmarshal(ctx.buf.Bytes(), &got); err != nil {
 			t.Fatalf("invalid JSON output: %v: %v", err, ctx.buf.String())
+		} else {
+			// for golang slog
+			for k, v := range got {
+				if k == "level" {
+					got[k] = strings.ToLower(v.(string))
+				} else if k == "msg" {
+					got["message"] = v
+					delete(got, k)
+				}
+			}
 		}
 		if eq, err := checkers.DeepEqual(got, want); !eq {
 			t.Errorf("invalid output: %v\ngot: %s\nwant: %s", err, ctx.buf.String(), wj)
